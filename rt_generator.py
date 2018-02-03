@@ -7,6 +7,11 @@ import numpy
 from matplotlib import pyplot
 from scipy.signal import savgol_filter
 
+
+def plot_smooth(x, y, label):
+    pyplot.plot(x, savgol_filter(y, 21, 3), lw=1.25, label=label)
+
+
 def generate_signals(in1=1.01, in2=1.0, duration=1000, rate=10, frequency=10):
     t = numpy.linspace(0, duration / 1000, duration)
     n1 = numpy.random.poisson(rate, duration) + 1
@@ -18,13 +23,11 @@ def generate_signals(in1=1.01, in2=1.0, duration=1000, rate=10, frequency=10):
     s4 = numpy.random.poisson(in2 * oscillation, duration)
     return t, n1, s1, s2, n2, s3, s4
 
+
 t, n1, s1, s2, n2, s3, s4 = generate_signals()
 
-def plot_smooth(x, y, label):
-    pyplot.plot(x, savgol_filter(y, 21, 3), lw=1.25, label=label)
-
-pyplot.figure()
-ax = pyplot.subplot(221)
+pyplot.figure(figsize=(8,6))
+ax = pyplot.subplot(211)
 plot_smooth(t, s1, 'Steady Signal')
 plot_smooth(t, s3, 'Oscillating Signal')
 pyplot.xlim(0, 1)
@@ -34,13 +37,14 @@ ax.set_xticklabels([])
 pyplot.yticks([])
 pyplot.legend()
 
-pyplot.subplot(223)
+pyplot.subplot(212)
 pyplot.plot(t, numpy.cumsum(s1 - s2), lw=1.25)
 pyplot.plot(t, numpy.cumsum(s3 - s4), lw=1.25)
 pyplot.xlim(0, 1)
 pyplot.xlabel('Time (s)')
 pyplot.ylabel('Activity - Noise')
 pyplot.yticks([])
+pyplot.tight_layout()
 
 max_s1_e = numpy.zeros(1000)
 max_s3_e = numpy.zeros(1000)
@@ -49,8 +53,11 @@ for i in range(1000):
     max_s1_e[i] = numpy.cumsum(s1 - (n1 - 1)).max()
     max_s3_e[i] = numpy.cumsum(s3 - (n2 - 1)).max()
 
+pyplot.figure(figsize=(12,8))
 pyplot.subplot(222)
 pyplot.plot(numpy.sort(max_s1_e), numpy.linspace(0, 1, 1000), lw=1.5)
 pyplot.plot(numpy.sort(max_s3_e), numpy.linspace(0, 1, 1000), lw=1.5)
 pyplot.xlabel('Maximum Activity - Noise')
 pyplot.ylabel('Cum. Prob. of (x)')
+
+pyplot.tight_layout()
