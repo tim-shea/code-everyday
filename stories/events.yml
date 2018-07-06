@@ -1,0 +1,12 @@
+events:
+  - name: "The Feast"
+    characters:
+      - label: "king"
+    template_text: >
+      Once upon a time, A <king.type> held a great feast at <king.pronoun> castle. The
+      <king.type>'s name was <king.name>.
+  - name: "The Rat Hunter"
+    characters:
+      - label: "old_woman"
+    template_text: >
+      Rats are running amok in the basement of an <old_woman> in town.
