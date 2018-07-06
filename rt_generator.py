@@ -7,6 +7,9 @@ import numpy
 from matplotlib import pyplot
 from scipy.signal import savgol_filter
 
+
+#%% This is some kind of lame DDM stuff
+
 def generate_signals(in1=1.01, in2=1.0, duration=1000, rate=10, frequency=10):
     t = numpy.linspace(0, duration / 1000, duration)
     n1 = numpy.random.poisson(rate, duration) + 1
@@ -54,3 +57,24 @@ pyplot.plot(numpy.sort(max_s1_e), numpy.linspace(0, 1, 1000), lw=1.5)
 pyplot.plot(numpy.sort(max_s3_e), numpy.linspace(0, 1, 1000), lw=1.5)
 pyplot.xlabel('Maximum Activity - Noise')
 pyplot.ylabel('Cum. Prob. of (x)')
+
+#%% Dynamic decision making
+
+
+xMax = 100
+tMax = 100
+img = numpy.random.randn(xMax, xMax)
+sample = numpy.zeros(tMax)
+dx = 5 * numpy.random.randn(xMax, 2)
+x = numpy.zeros((tMax, 2))
+x[0,:] = (xMax / 2, xMax / 2) + dx[0,:]
+for t in range(1, len(dx)):
+    x[t,:] = numpy.maximum(numpy.minimum(x[t-1] + dx[t], xMax - 0.5), 0.5)
+    sample[t] = img[int(x[t,0]), int(x[t,1])]
+
+pyplot.subplot(211)
+pyplot.imshow(img)
+pyplot.plot(x[:,0], x[:,1], 'r-')
+pyplot.plot(x[-1,0], x[-1,1], 'k+', markersize=15)
+pyplot.subplot(212)
+pyplot.plot(sample, '.')
