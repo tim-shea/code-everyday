@@ -48,7 +48,7 @@ def plot_image(ax, image):
 
 #%%
 
-original, data, display = load_image('C:/Users/bimmy/Pictures/London.jpg', 0.75)
+original, data, display = load_image('./Jake.jpg', 0.75)
 pyplot.figure(figsize=(12,6))
 ax = pyplot.subplot(121)
 plot_image(ax, display)
@@ -136,7 +136,7 @@ def close_figure(event):
 
 #%%
 
-imageset = pandas.read_csv('C:/Users/bimmy/git/code-everyday/open_images_urls.csv', delimiter=',')
+imageset = pandas.read_csv('./open_images_urls.csv', delimiter=',')
 
 #%%
 
@@ -237,7 +237,7 @@ update_thread = Thread(target=update_classifier, args=(classifier, preds, 0))
 update_thread.start()
 
 # Classify 200 images or until the user closes the interactive plot
-while (not fig.canvas.closed) and (len(dt) < 1):
+while (not fig.canvas.closed) and (len(dt) < 10):
     # If the classifier has made a decision for the current image, select the next image
     if decision:
         conf.fill(0)
