@@ -290,6 +290,94 @@ while (not fig.canvas.closed) and (len(dt) < 10):
 
 #%%
 
+# Initialize the classifier and timeseries for sequential bayesian updates
+classifier = SubimageClassifier(model)
+image_num = numpy.random.randint(100000)
+classifier.load_image(imageset.image_url[image_num], 0.5)
+preds = numpy.zeros((1, 1000))
+
+pA = numpy.full(1000, 1 / 1000)
+pBgivenA = numpy.linspace(0.44, 0.56, 100)
+pBgivenNotA = numpy.linspace(0.56, 0.44, 100)
+
+t = 0
+decision = False
+images = []
+labels = []
+dt = []
+
+# Initialize the classifer subplots and event handlers
+fig = pyplot.figure(figsize=(12,12))
+fig.canvas.closed = False
+ax1 = fig.add_subplot(221)
+ax2 = fig.add_subplot(222)
+ax3 = fig.add_subplot(212)
+fig.canvas.mpl_connect('close_event', close_figure)
+fig.show()
+fig.canvas.draw()
+
+# Initialize the classifer update thread
+update_thread = Thread(target=update_classifier, args=(classifier, preds, 0))
+update_thread.start()
+
+# Classify 200 images or until the user closes the interactive plot
+while (not fig.canvas.closed) and (len(dt) < 100):
+    # If the classifier has made a decision for the current image, select the next image
+    if decision:
+        pA.fill(1.0 / 1000)
+        t = 0
+        ax1.set_title('')
+        image_num = numpy.random.randint(100000)
+        if classifier.load_image(imageset.image_url[image_num], 0.5):
+            decision = False
+        update_thread = Thread(target=update_classifier, args=(classifier, preds, 0))
+        update_thread.start()
+    # While waiting for the next predictions, handle plot events
+    elif update_thread.is_alive():
+        pyplot.pause(0.001)
+    # Update the display with the next set of predictions
+    else:
+        update_thread.join()
+        # Show a running map of prediction confidence for all 1000 classes
+        ax1.clear()
+        ax1.imshow(classifier.display)
+        draw_subimage_border(ax1, classifier.display, classifier.region.offset)
+        pAsum = pA.sum()
+        # Calculate a running confidence estimate for each class and plot the values
+        for a in range(1000):
+            pred = int(100 * preds[0,a])
+            likelihood  = pBgivenA[pred] * pA[a]
+            invLikelihood = pBgivenNotA[pred] * (pAsum - pA[a])
+            pA[a] = likelihood / (likelihood + invLikelihood)
+        ax2.clear()
+        ax2.plot(pA)
+        ax2.plot([0, 1000], [0.95, 0.95], 'g--')
+        ax2.set_ylim(0.0001, 1.0)
+        ax2.set_yscale('log')
+        # Print the highest confidence class when the running confidence estimate exceeds 0.25
+        if pA.max() > 0.95 or t == 150:
+            # Record the trial data
+            label = decode_predictions(numpy.expand_dims(pA, axis=0), top=1)[0][0][1]
+            labels.append(label)
+            images.append(image_num)
+            dt.append(t)
+            decision = True
+            # Display the result
+            ax1.set_title('Label: {} ({} steps)'.format(label, t))
+            ax3.clear()
+            ax3.plot(dt, 'o')
+            pyplot.show()
+            pyplot.pause(0.25)
+        else:
+            # Show the updated plots
+            pyplot.show()
+            # Start the update thread for the next set of predictions
+            t += 1
+            update_thread = Thread(target=update_classifier, args=(classifier, preds, 0))
+            update_thread.start()
+
+#%%
+
 results = pandas.DataFrame({
         'image_name': imageset.image_name[images].values,
         'label':labels,
